@@ -307,6 +307,14 @@ def preprocess_loss_inputs(
         logprobs = logprobs.reshape(bsz, -1, single_action_dim).sum(dim=[1, 2])
         old_logprobs = old_logprobs.reshape(bsz, -1, single_action_dim).sum(dim=[1, 2])
 
+    elif logprob_type == "sequence_level":
+        # GSPO: sequence-level importance sampling
+        # Use mean instead of sum to get geometric mean of per-element importance ratios:
+        #   ratio = exp(mean(log_new - log_old)) = (prod_t (pi_new_t / pi_old_t))^(1/N)
+        # logprobs, old_logprobs: [bsz, num_action_chunks, action_dim] -> [bsz]
+        logprobs = logprobs.reshape(bsz, -1, single_action_dim).mean(dim=[1, 2])
+        old_logprobs = old_logprobs.reshape(bsz, -1, single_action_dim).mean(dim=[1, 2])
+
     target_shape = logprobs.shape
     advantages = expand_to_target_dim(advantages, target_shape)
     loss_mask = expand_to_target_dim(loss_mask, target_shape)

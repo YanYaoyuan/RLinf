@@ -275,3 +275,34 @@ def compute_grpo_actor_loss_fn(**kwargs) -> tuple[torch.Tensor, dict]:
     metrics_data.update(actor_metrics_data)
 
     return actor_loss, metrics_data
+
+
+@register_policy_loss("gspo")
+def compute_gspo_actor_loss_fn(**kwargs) -> tuple[torch.Tensor, dict]:
+    """
+    Compute actor loss for Group Sequence Policy Optimization (GSPO).
+
+    GSPO uses sequence-level importance sampling instead of token-level,
+    computing the geometric mean of per-element importance ratios.
+    The sequence-level ratio is handled by logprob_type="sequence_level"
+    in preprocess_loss_inputs; the loss formula itself (PPO clipping)
+    remains the same.
+
+    Reference: https://huggingface.co/papers/2507.18071
+
+    Args:
+        logprobs (torch.Tensor): Current log probabilities (sequence-level mean)
+        old_logprobs (torch.Tensor): Previous log probabilities (sequence-level mean)
+        advantages (torch.Tensor): Advantage values
+        clip_ratio_high (float): Upper clipping ratio for PPO
+        clip_ratio_low (float): Lower clipping ratio for PPO
+        loss_mask (Optional[torch.Tensor]): Mask tensor to apply to the loss
+
+    Returns:
+        Tuple[torch.Tensor, Dict]: Policy gradient loss and metrics dictionary
+    """
+    metrics_data = {}
+    actor_loss, actor_metrics_data = compute_ppo_actor_loss(**kwargs)
+    metrics_data.update(actor_metrics_data)
+
+    return actor_loss, metrics_data

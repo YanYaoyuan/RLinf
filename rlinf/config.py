@@ -943,6 +943,13 @@ def validate_cfg(cfg: DictConfig) -> DictConfig:
     if cfg.algorithm.adv_type in ("grpo", "reinpp_baseline"):
         assert cfg.algorithm.group_size > 1
 
+    # GSPO validation: sequence-level importance sampling requires matching logprob_type
+    if cfg.algorithm.loss_type == "gspo":
+        assert cfg.algorithm.get("logprob_type", None) == "sequence_level", (
+            "GSPO (algorithm.loss_type='gspo') requires algorithm.logprob_type='sequence_level'. "
+            f"Current value: {cfg.algorithm.get('logprob_type', None)}"
+        )
+
     assert cfg.actor.training_backend in SUPPORTED_TRAINING_BACKENDS, (
         f"Unsupported training_backend {cfg.actor.training_backend}. Supported training backends are {SUPPORTED_TRAINING_BACKENDS}."
     )
